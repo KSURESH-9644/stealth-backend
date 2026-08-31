@@ -53,7 +53,9 @@
     const answerEl = document.getElementById('answer');
     
     function connect() {
-      const ws = new WebSocket(`ws://${location.host}`);
+      // Dynamic Protocol Selection (HTTPS -> WSS, HTTP -> WS)
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${location.host}`);
       
       ws.onopen = () => {
         statusEl.innerText = 'ONLINE';
@@ -78,6 +80,10 @@
         statusEl.innerText = 'DISCONNECTED (Retrying...)';
         statusEl.style.color = '#f85149';
         setTimeout(connect, 2000);
+      };
+
+      ws.onerror = (err) => {
+        console.error('WebSocket Error:', err);
       };
     }
 
