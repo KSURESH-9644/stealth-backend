@@ -3,91 +3,378 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Stream View</title>
+  <title>Stealth Assistant Overlay</title>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      user-select: none;
     }
+
     body {
-      background: #0d1117;
+      background-color: transparent;
       color: #e6edf3;
-      font-family: monospace, sans-serif;
-      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 10px;
     }
-    #header {
-      position: sticky;
-      top: 0;
-      background: #161b22;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 14px;
+
+    #overlay-container {
+      width: 100%;
+      max-width: 900px;
+      height: 95vh;
+      background: rgba(13, 17, 23, 0.94);
+      border: 1px solid rgba(48, 54, 61, 0.8);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+      transition: all 0.2s ease-in-out;
+    }
+
+    /* Top Control Bar */
+    #top-bar {
       display: flex;
       justify-content: space-between;
-      border: 1px solid #30363d;
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(22, 27, 34, 0.85);
+      border-bottom: 1px solid rgba(48, 54, 61, 0.8);
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
     }
-    #status {
-      color: #3fb950;
-      font-weight: bold;
+
+    .status-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .indicator-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background-color: #3fb950;
+      box-shadow: 0 0 8px #3fb950;
+    }
+
+    #status-text {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #8b949e;
+      text-transform: uppercase;
+    }
+
+    .controls-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mode-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(56, 139, 253, 0.15);
+      color: #58a6ff;
+      border: 1px solid rgba(56, 139, 253, 0.3);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-pill.code-mode {
+      background: rgba(188, 140, 255, 0.15);
+      color: #bc8cff;
+      border-color: rgba(188, 140, 255, 0.3);
+    }
+
+    .btn-action {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s;
+    }
+
+    .btn-action:hover {
+      background: #30363d;
+      color: #f0f6fc;
+    }
+
+    .btn-mic.recording {
+      background: #da3633;
+      color: white;
+      border-color: #f85149;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0.6); }
+      70% { box-shadow: 0 0 0 8px rgba(248, 81, 73, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(248, 81, 73, 0); }
+    }
+
+    /* Output Content Area */
+    #content-area {
+      flex: 1;
+      padding: 18px 20px;
+      overflow-y: auto;
+      user-select: text;
+    }
+
+    #content-area::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #content-area::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 4px;
+    }
+
+    #solution-output {
+      font-size: 14.5px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #e6edf3;
+      font-family: inherit;
+    }
+
+    .code-block {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      color: #7ee787;
+    }
+
+    .empty-state {
+      color: #484f58;
+      font-style: italic;
       font-size: 13px;
     }
-    #answer {
-      font-size: 14px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      color: #58a6ff;
+
+    #fileInput {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div id="header">
-    <span>SYSTEM</span>
-    <span id="status">Connecting...</span>
+
+  <div id="overlay-container">
+    <!-- Header Bar -->
+    <div id="top-bar">
+      <div class="status-section">
+        <div class="indicator-dot" id="status-dot"></div>
+        <span id="status-text">Ready</span>
+      </div>
+
+      <div class="controls-section">
+        <span class="mode-pill" id="mode-badge" onclick="toggleMode()">🎙️ SPEECH MODE</span>
+        
+        <button class="btn-action btn-mic" id="mic-btn" onclick="toggleMic()">
+          <span id="mic-icon">🎤</span> <span id="mic-label">Record</span>
+        </button>
+
+        <button class="btn-action" onclick="triggerScreenCapture()">
+          📸 Solve Screen
+        </button>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
+
+        <button class="btn-action" onclick="copySolution()">📋 Copy</button>
+        <button class="btn-action" onclick="clearOutput()">🗑️ Clear</button>
+      </div>
+    </div>
+
+    <!-- Live Content -->
+    <div id="content-area">
+      <div id="solution-output">
+        <span class="empty-state">Waiting for question or screenshot capture...</span>
+      </div>
+    </div>
   </div>
-  <pre id="answer">Waiting for AI trigger...</pre>
 
   <script>
-    const statusEl = document.getElementById('status');
-    const answerEl = document.getElementById('answer');
-    
-    function connect() {
-      // Dynamic Protocol Selection (HTTPS -> WSS, HTTP -> WS)
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${location.host}`);
-      
-      ws.onopen = () => {
-        statusEl.innerText = 'ONLINE';
-        statusEl.style.color = '#3fb950';
-      };
+    let currentMode = 'speech';
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
 
-      ws.onmessage = (event) => {
+    const statusText = document.getElementById('status-text');
+    const statusDot = document.getElementById('status-dot');
+    const modeBadge = document.getElementById('mode-badge');
+    const solutionOutput = document.getElementById('solution-output');
+    const micBtn = document.getElementById('mic-btn');
+    const micLabel = document.getElementById('mic-label');
+    const contentArea = document.getElementById('content-area');
+
+    // Secure WebSocket Auto-Connect
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+    ws.onopen = () => {
+      setStatus('ONLINE', '#3fb950');
+    };
+
+    ws.onmessage = (event) => {
+      try {
         const data = JSON.parse(event.data);
         if (data.type === 'status') {
-          statusEl.innerText = data.msg;
+          setStatus(data.msg, '#58a6ff');
         } else if (data.type === 'answer') {
-          statusEl.innerText = 'SOLVED';
-          answerEl.innerText = data.text;
-          window.scrollTo(0, document.body.scrollHeight);
+          setStatus('SOLVED', '#3fb950');
+          displayAnswer(data.text);
         } else if (data.type === 'clear') {
-          statusEl.innerText = 'STANDBY';
-          answerEl.innerText = '';
+          clearOutput();
         }
-      };
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-      ws.onclose = () => {
-        statusEl.innerText = 'DISCONNECTED (Retrying...)';
-        statusEl.style.color = '#f85149';
-        setTimeout(connect, 2000);
-      };
+    ws.onclose = () => {
+      setStatus('DISCONNECTED', '#f85149');
+    };
 
-      ws.onerror = (err) => {
-        console.error('WebSocket Error:', err);
+    function setStatus(msg, color) {
+      statusText.innerText = msg;
+      statusDot.style.backgroundColor = color;
+      statusDot.style.boxShadow = `0 0 8px ${color}`;
+    }
+
+    function toggleMode() {
+      if (currentMode === 'speech') {
+        currentMode = 'code';
+        modeBadge.innerText = '💻 CODE MODE';
+        modeBadge.className = 'mode-pill code-mode';
+      } else {
+        currentMode = 'speech';
+        modeBadge.innerText = '🎙️ SPEECH MODE';
+        modeBadge.className = 'mode-pill';
+      }
+    }
+
+    function displayAnswer(text) {
+      solutionOutput.innerText = text;
+      if (currentMode === 'code') {
+        solutionOutput.classList.add('code-block');
+      } else {
+        solutionOutput.classList.remove('code-block');
+      }
+      contentArea.scrollTop = contentArea.scrollHeight;
+    }
+
+    function clearOutput() {
+      solutionOutput.innerHTML = '<span class="empty-state">Waiting for question or screenshot capture...</span>';
+      setStatus('READY', '#3fb950');
+    }
+
+    function copySolution() {
+      if (solutionOutput.innerText) {
+        navigator.clipboard.writeText(solutionOutput.innerText);
+        const originalText = statusText.innerText;
+        setStatus('COPIED TO CLIPBOARD', '#3fb950');
+        setTimeout(() => setStatus(originalText, '#3fb950'), 1800);
+      }
+    }
+
+    // Direct Browser Screen Capture (Native browser ScreenShare API)
+    async function triggerScreenCapture() {
+      try {
+        setStatus('Capturing Screen...', '#58a6ff');
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const track = stream.getVideoTracks()[0];
+        const imageCapture = new ImageCapture(track);
+        const bitmap = await imageCapture.grabFrame();
+        track.stop();
+
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+
+        const base64Data = canvas.toDataURL('image/png').split(',')[1];
+        setStatus('AI Analyzing Screen...', '#bc8cff');
+
+        await fetch('/api/solve-vision', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64Data, mode: currentMode })
+        });
+      } catch (err) {
+        // Fallback to manual file upload if screen share is cancelled
+        document.getElementById('fileInput').click();
+      }
+    }
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        const imageBase64 = reader.result.split(',')[1];
+        setStatus('AI Analyzing Image...', '#bc8cff');
+        await fetch('/api/solve-vision', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64, mode: currentMode })
+        });
       };
     }
 
-    connect();
+    // Live Mic Toggle
+    async function toggleMic() {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = async () => {
+              const base64Audio = reader.result.split(',')[1];
+              setStatus('Transcribing Speech...', '#58a6ff');
+              await fetch('/api/solve-audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ base64Audio, mode: currentMode })
+              });
+            };
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          micBtn.classList.add('recording');
+          micLabel.innerText = 'Stop';
+          setStatus('Listening...', '#f85149');
+        } catch (err) {
+          alert('Microphone Access Error: ' + err.message);
+        }
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        micLabel.innerText = 'Record';
+      }
+    }
   </script>
 </body>
 </html>
