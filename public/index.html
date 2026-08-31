@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Stream View</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: monospace, sans-serif;
+      padding: 16px;
+    }
+    #header {
+      position: sticky;
+      top: 0;
+      background: #161b22;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      border: 1px solid #30363d;
+    }
+    #status {
+      color: #3fb950;
+      font-weight: bold;
+      font-size: 13px;
+    }
+    #answer {
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: #58a6ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <span>SYSTEM</span>
+    <span id="status">Connecting...</span>
+  </div>
+  <pre id="answer">Waiting for AI trigger...</pre>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const answerEl = document.getElementById('answer');
+    
+    function connect() {
+      const ws = new WebSocket(`ws://${location.host}`);
+      
+      ws.onopen = () => {
+        statusEl.innerText = 'ONLINE';
+        statusEl.style.color = '#3fb950';
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'status') {
+          statusEl.innerText = data.msg;
+        } else if (data.type === 'answer') {
+          statusEl.innerText = 'SOLVED';
+          answerEl.innerText = data.text;
+          window.scrollTo(0, document.body.scrollHeight);
+        } else if (data.type === 'clear') {
+          statusEl.innerText = 'STANDBY';
+          answerEl.innerText = '';
+        }
+      };
+
+      ws.onclose = () => {
+        statusEl.innerText = 'DISCONNECTED (Retrying...)';
+        statusEl.style.color = '#f85149';
+        setTimeout(connect, 2000);
+      };
+    }
+
+    connect();
+  </script>
+</body>
+</html>

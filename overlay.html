@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stealth Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: transparent !important;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 8px 10px;
+      background: rgba(139, 148, 162, 0.65); 
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(0, 255, 136, 0.35);
+      border-radius: 10px;
+      color: #e6edf3;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    #titlebar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: grab;
+      -webkit-app-region: drag;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    #titlebar:active { cursor: grabbing; }
+
+    #status-info { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    #status {
+      font-size: 11px;
+      font-weight: 700;
+      color: #00ff88;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .badge {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #8b949e;
+    }
+
+    .badge.active {
+      background: rgba(0, 255, 136, 0.25);
+      color: #00ff88;
+      border: 1px solid rgba(0, 255, 136, 0.5);
+    }
+
+    .controls { display: flex; align-items: center; gap: 6px; -webkit-app-region: no-drag; }
+
+    .btn {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #121212;
+      transition: transform 0.1s ease;
+    }
+
+    .btn:hover { transform: scale(1.2); }
+    .btn-min { background: #e3b341; }
+    .btn-max { background: #58a6ff; }
+    .btn-hide { background: #f85149; }
+
+    /* 💡 Shortcuts Bar Styling */
+    #shortcuts-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      padding: 4px 6px;
+      margin-top: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 5px;
+      font-size: 9.5px;
+      font-family: monospace;
+      color: #94a3b8;
+      -webkit-app-region: no-drag;
+      flex-shrink: 0;
+    }
+
+    .hint-chip {
+      color: #cbd5e1;
+    }
+    .hint-chip b {
+      color: #00ff88;
+    }
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      -webkit-app-region: no-drag;
+      flex-shrink: 0;
+    }
+
+    .action-btn {
+      background: rgba(48, 54, 61, 0.8);
+      border: 1px solid rgba(240, 246, 252, 0.15);
+      color: #c9d1d9;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: rgba(0, 255, 136, 0.2);
+      border-color: #00ff88;
+      color: #ffffff;
+    }
+
+    #content-box {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-app-region: no-drag;
+      user-select: text;
+      padding-top: 4px;
+      padding-right: 4px;
+    }
+
+    #answer {
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      color: #f0f6fc;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      pointer-events: auto;
+    }
+
+    #content-box::-webkit-scrollbar { width: 4px; }
+    #content-box::-webkit-scrollbar-thumb { 
+      background: rgba(0, 255, 136, 0.4); 
+      border-radius: 4px; 
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Header Titlebar -->
+    <div id="titlebar">
+      <div id="status-info">
+        <span id="status">Standby</span>
+        <span class="badge" id="modeBadge">Manual Mic</span>
+      </div>
+      <div class="controls">
+        <button class="btn btn-min" id="minBtn" title="Minimize">−</button>
+        <button class="btn btn-max" id="maxBtn" title="Maximize">□</button>
+        <button class="btn btn-hide" id="hideBtn" title="Hide">✕</button>
+      </div>
+    </div>
+
+    <!-- 💡 Full Shortcuts Bar (Ctrl+Shift+Key) -->
+    <div id="shortcuts-bar" style="font-weight: 700;">
+      <span class="hint-chip"><b>1:</b>Code</span> |
+      <span class="hint-chip"><b>2:</b>Speech</span> |
+      <span class="hint-chip"><b>C:</b>Snap</span> |
+      <span class="hint-chip"><b>S:</b>Solve</span> |
+      <span class="hint-chip"><b>V:</b>Mic</span> |
+      <span class="hint-chip"><b>D:</b>Auto</span> |
+      <span class="hint-chip"><b>Q:</b>Copy</span> |
+      <span class="hint-chip"><b>H:</b>Hide</span> |
+      <span class="hint-chip"><b>X:</b>Clr</span>
+    </div>
+
+    <!-- Actions Toolbar -->
+    <div id="toolbar">
+      <button class="action-btn" id="attachResumeBtn">📎 Attach Resume</button>
+      <button class="action-btn" id="toggleDirectVoiceBtn">⚡ Direct Voice: OFF</button>
+    </div>
+
+    <!-- AI Output Box -->
+    <div id="content-box">
+      <div id="answer">Ready. Press 1 (Code), 2 (Speech), Q (Copy), or Hotkeys...</div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    const statusDiv = document.getElementById('status');
+    const answerDiv = document.getElementById('answer');
+    const modeBadge = document.getElementById('modeBadge');
+    const attachResumeBtn = document.getElementById('attachResumeBtn');
+    const toggleDirectVoiceBtn = document.getElementById('toggleDirectVoiceBtn');
+
+    document.getElementById('minBtn').onclick = () => ipcRenderer.send('window-minimize');
+    document.getElementById('maxBtn').onclick = () => ipcRenderer.send('window-toggle-maximize');
+    document.getElementById('hideBtn').onclick = () => ipcRenderer.send('window-hide');
+
+    attachResumeBtn.onclick = async () => {
+      const res = await ipcRenderer.invoke('select-resume-file');
+      if (res && res.success) {
+        attachResumeBtn.innerText = `✅ Attached: ${res.name}`;
+        attachResumeBtn.style.borderColor = '#00ff88';
+        statusDiv.innerText = 'Resume Synced';
+      }
+    };
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    ipcRenderer.on('ai-update', (event, data) => {
+      if (data.type === 'status') {
+        statusDiv.innerText = data.msg;
+      } else if (data.type === 'answer') {
+        statusDiv.innerText = 'Solved';
+        answerDiv.innerText = data.text;
+      } else if (data.type === 'clear') {
+        statusDiv.innerText = 'Standby';
+        answerDiv.innerText = 'Buffer cleared. Ready.';
+      }
+    });
+
+    let isDirectMode = false;
+    let isCapturingManual = false;
+    let directStream = null;
+    let audioContext = null;
+    let analyser = null;
+    let directRecorder = null;
+    let directChunks = [];
+    let silenceTimer = null;
+    let isSpeaking = false;
+
+    function setDirectMode(enabled) {
+      isDirectMode = enabled;
+      if (isDirectMode) {
+        modeBadge.innerText = 'Direct VAD';
+        modeBadge.classList.add('active');
+        toggleDirectVoiceBtn.innerText = '⚡ Direct Voice: ON';
+        toggleDirectVoiceBtn.style.borderColor = '#00ff88';
+        toggleDirectVoiceBtn.style.background = 'rgba(0, 255, 136, 0.25)';
+        startContinuousAudioMonitoring();
+      } else {
+        modeBadge.innerText = 'Manual Mic';
+        modeBadge.classList.remove('active');
+        toggleDirectVoiceBtn.innerText = '⚡ Direct Voice: OFF';
+        toggleDirectVoiceBtn.style.borderColor = 'rgba(240, 246, 252, 0.15)';
+        toggleDirectVoiceBtn.style.background = 'rgba(48, 54, 61, 0.8)';
+        stopContinuousAudioMonitoring();
+      }
+    }
+
+    toggleDirectVoiceBtn.onclick = () => setDirectMode(!isDirectMode);
+    ipcRenderer.on('toggle-direct-mode', () => setDirectMode(!isDirectMode));
+
+    async function startContinuousAudioMonitoring() {
+      try {
+        const sourceId = await ipcRenderer.invoke('get-desktop-source-id');
+        directStream = await navigator.mediaDevices.getUserMedia({
+          audio: { mandatory: { chromeMediaSource: 'desktop' } },
+          video: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: sourceId,
+              minWidth: 10, maxWidth: 10, minHeight: 10, maxHeight: 10
+            }
+          }
+        });
+
+        const audioTrack = directStream.getAudioTracks()[0];
+        const audioStream = new MediaStream([audioTrack]);
+
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(audioStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        function detectVoice() {
+          if (!isDirectMode) return;
+          analyser.getByteFrequencyData(dataArray);
+
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          let average = sum / dataArray.length;
+
+          if (average > 12) { 
+            if (!isSpeaking) {
+              isSpeaking = true;
+              startDirectSegmentRecorder(audioStream);
+            }
+            clearTimeout(silenceTimer);
+            silenceTimer = setTimeout(() => {
+              isSpeaking = false;
+              if (directRecorder && directRecorder.state === 'recording') {
+                directRecorder.stop();
+              }
+            }, 1400);
+          }
+
+          requestAnimationFrame(detectVoice);
+        }
+
+        detectVoice();
+        statusDiv.innerText = 'Listening Calls (Auto)...';
+      } catch (err) {
+        console.error(err);
+        statusDiv.innerText = 'Direct Mic Error';
+      }
+    }
+
+    function startDirectSegmentRecorder(stream) {
+      directChunks = [];
+      directRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      directRecorder.ondataavailable = (e) => { if (e.data.size > 0) directChunks.push(e.data); };
+      directRecorder.onstop = async () => {
+        if (directChunks.length === 0) return;
+        const audioBlob = new Blob(directChunks, { type: 'audio/webm' });
+        const base64 = await blobToBase64(audioBlob);
+        statusDiv.innerText = 'Auto-Answering Voice...';
+        ipcRenderer.send('process-internal-audio', base64);
+      };
+      directRecorder.start();
+    }
+
+    function stopContinuousAudioMonitoring() {
+      if (directStream) {
+        directStream.getTracks().forEach(t => t.stop());
+        directStream = null;
+      }
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
+    }
+
+    let manualRecorder = null;
+    let manualChunks = [];
+    let manualStream = null;
+
+    async function toggleManualAudio() {
+      if (!isCapturingManual) {
+        try {
+          const sourceId = await ipcRenderer.invoke('get-desktop-source-id');
+          manualStream = await navigator.mediaDevices.getUserMedia({
+            audio: { mandatory: { chromeMediaSource: 'desktop' } },
+            video: {
+              mandatory: {
+                chromeMediaSource: 'desktop',
+                chromeMediaSourceId: sourceId,
+                minWidth: 10, maxWidth: 10, minHeight: 10, maxHeight: 10
+              }
+            }
+          });
+
+          const audioTrack = manualStream.getAudioTracks()[0];
+          manualRecorder = new MediaRecorder(new MediaStream([audioTrack]), { mimeType: 'audio/webm' });
+          manualChunks = [];
+
+          manualRecorder.ondataavailable = (e) => { if (e.data.size > 0) manualChunks.push(e.data); };
+          manualRecorder.onstop = async () => {
+            const audioBlob = new Blob(manualChunks, { type: 'audio/webm' });
+            const base64 = await blobToBase64(audioBlob);
+            statusDiv.innerText = 'Processing Speech...';
+            ipcRenderer.send('process-internal-audio', base64);
+            if (manualStream) { manualStream.getTracks().forEach(t => t.stop()); manualStream = null; }
+          };
+
+          manualRecorder.start();
+          isCapturingManual = true;
+          statusDiv.innerText = '🔴 Recording Voice...';
+        } catch (err) {
+          statusDiv.innerText = 'Manual Mic Error';
+        }
+      } else {
+        isCapturingManual = false;
+        if (manualRecorder && manualRecorder.state !== 'inactive') manualRecorder.stop();
+      }
+    }
+
+    ipcRenderer.on('toggle-voice', () => toggleManualAudio());
+  </script>
+</body>
+</html>

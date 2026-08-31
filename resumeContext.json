@@ -1,0 +1,95 @@
+{
+  "candidate_profile": {
+    "title": "Senior Full-Stack .NET & Vue.js Engineer",
+    "primary_domain": "Enterprise Resource Planning (ERP) Migration, Production Support & Modernization",
+    "primary_stack": ".NET Core / C# & Modern Vue.js (Vue 3 / Composition API)",
+    "legacy_maintenance_stack": "ASP.NET MVC, JavaScript, jQuery, MS SQL Server",
+    "core_philosophy": "Building scalable, high-throughput modern ERP architectures while maintaining high uptime and stability for legacy enterprise systems."
+  },
+  "project_evolution_and_migration": {
+    "legacy_system_focus10": {
+      "stack": "ASP.NET MVC, JavaScript, jQuery, Razor Views, MS SQL Server",
+      "responsibilities_and_support": "Active production support, resolving client tickets / ETs (Error Tracking issues), fixing legacy bugs, optimizing slow stored procedures, and ensuring business continuity."
+    },
+    "modern_system_focusXI": {
+      "stack": "ASP.NET Web API (.NET Core), C#, Modern Vue.js (Vue 3 / `<script setup>`), Pinia, Tailwind CSS",
+      "design_workflow": "Directly translating Figma design tokens, interactive prototypes, and component design systems into pixel-perfect, responsive Vue 3 components.",
+      "migration_highlights": "Decoupling legacy monolithic MVC views into clean RESTful APIs and lightweight single-page applications (SPA), modernizing state management with Pinia, and improving initial page load and rendering performance."
+    }
+  },
+  "deep_dive_erp_modules": {
+    "budgets_and_financials": {
+      "core_functionality": "Fiscal year budgeting, variance analysis (budgeted vs. actuals), cost center allocations, ledger postings, and audit trails.",
+      "technical_implementation": "Handled precision calculations with `decimal` in C# to avoid floating-point drift, implemented atomic multi-table ledger transactions via SQL transactions and Unit of Work, and applied strict concurrency tokens to prevent double-spending."
+    },
+    "dashboards_and_data_visualization": {
+      "core_functionality": "Real-time KPI metrics, revenue/expense trends, inventory turnover rates, and operational health summaries.",
+      "technical_implementation": "Integrated charting libraries (Chart.js / ECharts / ApexCharts) into Vue 3 `<script setup>`, optimized reactivity using `markRaw` / `shallowRef` to prevent reactivity overhead on huge datasets, handled dynamic canvas resizing on window changes, and implemented backend aggregation endpoints with Redis caching."
+    },
+    "enterprise_reporting_engine": {
+      "core_functionality": "High-volume transactional reports, fiscal summaries, dynamic column filters, grouping, sorting, and export pipelines (Excel / CSV / PDF).",
+      "technical_implementation": "Optimized heavy aggregate queries using indexed views, CTEs, and execution plan tuning in SQL Server; used `IQueryable` streaming with `.AsNoTracking()` in EF Core / Dapper to avoid memory bloat; rendered tabular data with virtual scrolling on the frontend and offloaded large exports to background jobs."
+    },
+    "other_core_modules": [
+      "WMS (Warehouse Management System) - Multi-bin tracking, FIFO/LIFO valuation, and stock audits.",
+      "Fixed Assets - Depreciation scheduling (Straight Line / WDV) and asset transfers.",
+      "POS & MRP - High-speed checkout, real-time stock deduction, and production demand planning.",
+      "Masters & Dynamic Forms - Metadata-driven enterprise forms, dynamic field rendering, and validation pipelines."
+    ]
+  },
+  "frontend_expertise": {
+    "framework_and_paradigm": "Vue 3 with `<script setup>` and Composition API (Primary Production Stack).",
+    "component_architecture": {
+      "props_and_emits": "Strict parent-child decoupling using `defineProps` for typed data input and `defineEmits` for predictable event emitting.",
+      "template_refs_and_exposure": "Encapsulating internal component logic and exposing only explicit methods/properties to parents using `defineExpose`.",
+      "clean_component_design": "Breaking down massive ERP views into modular child components, composables, and reusable slots."
+    },
+    "state_management": {
+      "library": "Pinia",
+      "best_practices": "Modular stores per ERP module (e.g., budgetStore, dashboardStore, reportStore, posStore), isolating UI state from server data."
+    },
+    "routing_and_navigation": {
+      "library": "Vue Router",
+      "best_practices": "Dynamic route generation based on user permissions, nested module routing, lazy-loading views, and navigation guards."
+    },
+    "ui_styling_and_design_sync": {
+      "figma_to_code": "Translating Figma designs and enterprise design systems into pixel-perfect, accessible UI components.",
+      "layout_and_responsiveness": "Handling dynamic window resize listeners, dynamic viewport heights (`100dvh`), responsive grid dashboards, and Tailwind CSS."
+    }
+  },
+  "api_integration_and_troubleshooting": {
+    "api_calling_patterns": "Axios with centralized HTTP clients, request/response interceptors for JWT token injection and automatic token refresh.",
+    "real_world_issues_and_resolutions": {
+      "cors_errors": "Configured secure CORS policies and allowed origins/headers in .NET middleware.",
+      "network_failures_and_retry": "Implemented exponential backoff retry mechanisms and fallback states for unstable connections.",
+      "race_conditions": "Used `AbortController` to cancel redundant inflight API calls on fast tab switches or search filters.",
+      "error_handling": "Standardized RFC 7807 Problem Details on backend; transformed errors into user-friendly UI toasts on frontend."
+    }
+  },
+  "large_data_and_performance_optimization": {
+    "frontend_optimizations": "Virtual scrolling (vue-virtual-scroller) for tens of thousands of report records, debounced filter inputs, and `shallowRef` for raw chart/report payloads.",
+    "backend_optimizations": "Keyset/Offset pagination, IQueryable streaming with `.AsNoTracking()`, selective column projection (`.Select()`), and chunked batch processing.",
+    "caching_strategies": "In-memory caching and Redis distributed caching for dashboard KPIs and master data."
+  },
+  "upskilling_and_secondary_skills": {
+    "learning_technologies": ["Angular (v16+ / Signals, Standalone Components)", "React (v18+ / Hooks)"],
+    "experience_status": "Actively upskilling and building POCs; no direct production project deployment yet.",
+    "positioning_strategy": "Be completely transparent if asked. Highlight strong cross-framework fundamentals (reactivity, state, component lifecycle)."
+  },
+  "backend_expertise": {
+    "framework": ".NET Core / C#",
+    "api_design": "Clean Architecture, RESTful Web APIs, Middleware pipelines, custom filters, JWT authentication, and FluentValidation.",
+    "data_access": "Entity Framework Core, Dapper for high-throughput queries, Repository Pattern, and Unit of Work.",
+    "database_engineering": "MS SQL Server / PostgreSQL, stored procedures, index tuning, transaction isolation, and query plan optimization."
+  },
+  "dsa_and_problem_solving": {
+    "core_strengths": "Hash Maps/Dictionaries for O(1) lookups, Two Pointers and Sliding Window for arrays/strings, Trees/Graphs for nested hierarchical structures (e.g., account charts, BOM hierarchies).",
+    "complexity_awareness": "Prioritizing optimal Time ($O(N)$, $O(N \\log N)$) and Space complexities with clean code readability."
+  },
+  "interview_speaking_guidelines": {
+    "project_intro_and_migration": "Frame your background as: 'I work on enterprise ERP systems. Previously, in Focus 10, we maintained a monolithic ASP.NET MVC, JavaScript, and jQuery application, handling real-time production issues and client ET tickets. Currently, we are modernizing and rebuilding our flagship modules into Focus XI using ASP.NET Web APIs and Vue 3 (Composition API, Pinia), converting Figma designs directly into pixel-perfect modular UI components.'",
+    "dashboard_and_reports_questions": "Explain optimizing UI chart performance with `shallowRef`/`markRaw` in Vue 3, dynamic resize observers, and backend SQL execution plan optimizations with Redis caching.",
+    "budgets_and_financials_questions": "Emphasize precision with `decimal`, ACID compliance with transactions, and variance tracking.",
+    "delivery_tone": "Pragmatic, senior enterprise engineer voice with strong migration, debugging, and production support credibility."
+  }
+}
