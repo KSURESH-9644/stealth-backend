@@ -3,51 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <title>Stealth Assistant</title>
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    html, body {
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
       height: 100%;
       width: 100%;
       overflow: hidden;
       background: transparent !important;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     #container {
       display: flex;
       flex-direction: column;
       height: 100vh;
-      padding: 8px 10px;
-      background: rgba(139, 148, 162, 0.65); 
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1.5px solid rgba(0, 255, 136, 0.35);
-      border-radius: 10px;
+      padding: 8px 12px;
+      background: rgba(10, 12, 18, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 255, 136, 0.4);
+      border-radius: 12px;
       color: #e6edf3;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85);
     }
 
+    /* =====================================================
+       TITLE BAR (CUSTOM JS DRAGGING)
+    ===================================================== */
     #titlebar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 5px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      cursor: grab;
-      -webkit-app-region: drag;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      cursor: move;
       user-select: none;
       flex-shrink: 0;
     }
 
-    #titlebar:active { cursor: grabbing; }
-
-    #status-info { 
-      display: flex; 
-      align-items: center; 
-      gap: 6px; 
+    #status-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       overflow: hidden;
       white-space: nowrap;
+      pointer-events: none;
     }
 
     #status {
@@ -56,6 +63,8 @@
       color: #00ff88;
       text-transform: uppercase;
       letter-spacing: 0.8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .badge {
@@ -63,7 +72,8 @@
       padding: 2px 6px;
       border-radius: 4px;
       background: rgba(255, 255, 255, 0.12);
-      color: #8b949e;
+      color: #f4056a;
+      font-weight: 700;
     }
 
     .badge.active {
@@ -72,7 +82,14 @@
       border: 1px solid rgba(0, 255, 136, 0.5);
     }
 
-    .controls { display: flex; align-items: center; gap: 6px; -webkit-app-region: no-drag; }
+    /* =====================================================
+       WINDOW CONTROLS
+    ===================================================== */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
     .btn {
       width: 14px;
@@ -89,47 +106,56 @@
       transition: transform 0.1s ease;
     }
 
-    .btn:hover { transform: scale(1.2); }
+    .btn:hover {
+      transform: scale(1.2);
+    }
+
     .btn-min { background: #e3b341; }
     .btn-max { background: #58a6ff; }
     .btn-hide { background: #f85149; }
 
-    /* 💡 Shortcuts Bar Styling */
+    /* =====================================================
+       SHORTCUTS
+    ===================================================== */
     #shortcuts-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 4px;
-      padding: 4px 6px;
+      padding: 3px 6px;
       margin-top: 4px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(179, 187, 242, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 5px;
       font-size: 9.5px;
       font-family: monospace;
       color: #94a3b8;
-      -webkit-app-region: no-drag;
       flex-shrink: 0;
     }
 
     .hint-chip {
-      color: #cbd5e1;
-    }
-    .hint-chip b {
-      color: #00ff88;
+      color: #60a5fa;
+      cursor: pointer;
     }
 
+    .hint-chip b {
+      color: #f87171;
+    }
+
+    /* =====================================================
+       TOOLBAR
+    ===================================================== */
     #toolbar {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
-      padding: 6px 0;
-      -webkit-app-region: no-drag;
+      padding: 5px 0;
       flex-shrink: 0;
     }
 
     .action-btn {
-      background: rgba(48, 54, 61, 0.8);
+      background: rgba(30, 35, 45, 0.6);
       border: 1px solid rgba(240, 246, 252, 0.15);
       color: #c9d1d9;
       padding: 4px 10px;
@@ -149,38 +175,110 @@
       color: #ffffff;
     }
 
+    /* =====================================================
+       CONTENT & TIMING BADGE
+    ===================================================== */
     #content-box {
       flex: 1;
       overflow-y: auto;
-      -webkit-app-region: no-drag;
       user-select: text;
-      padding-top: 4px;
+      padding-top: 6px;
       padding-right: 4px;
     }
 
-    #answer {
+    .answer-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       font-size: 13px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      color: #f0f6fc;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-      pointer-events: auto;
+      line-height: 1.55;
     }
 
-    #content-box::-webkit-scrollbar { width: 4px; }
-    #content-box::-webkit-scrollbar-thumb { 
-      background: rgba(0, 255, 136, 0.4); 
-      border-radius: 4px; 
+    .question-tag {
+      font-size: 11.5px;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border-left: 3px solid #38bdf8;
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .latency-badge {
+      font-size: 10px;
+      font-family: monospace;
+      color: #00ff88;
+      background: rgba(0, 255, 136, 0.15);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .bullet-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      color: #f1f5f9;
+    }
+
+    .bullet-icon {
+      color: #00ff88;
+      font-weight: bold;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* =====================================================
+       CODE
+    ===================================================== */
+    pre {
+      margin: 0;
+      max-width: 100%;
+    }
+
+    pre code {
+      display: block;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-family: "Fira Code", Consolas, monospace;
+      font-size: 11.5px;
+      color: #79c0ff;
+      overflow-x: auto;
+      line-height: 1.45;
+      white-space: pre;
+    }
+
+    /* =====================================================
+       SCROLLBAR
+    ===================================================== */
+    #content-box::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #content-box::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 136, 0.4);
+      border-radius: 4px;
     }
   </style>
 </head>
+
 <body>
+
   <div id="container">
-    <!-- Header Titlebar -->
+
+    <!-- TITLE BAR -->
     <div id="titlebar">
       <div id="status-info">
         <span id="status">Standby</span>
-        <span class="badge" id="modeBadge">Manual Mic</span>
+        <span class="badge" id="modeBadge">🎙️ Manual Mic</span>
       </div>
       <div class="controls">
         <button class="btn btn-min" id="minBtn" title="Minimize">−</button>
@@ -189,10 +287,10 @@
       </div>
     </div>
 
-    <!-- 💡 Full Shortcuts Bar (Ctrl+Shift+Key) -->
-    <div id="shortcuts-bar" style="font-weight: 700;">
-      <span class="hint-chip"><b>1:</b>Code</span> |
-      <span class="hint-chip"><b>2:</b>Speech</span> |
+    <!-- SHORTCUTS -->
+    <div id="shortcuts-bar">
+      <span class="hint-chip" id="mode1Chip"><b>1:</b>Code</span> |
+      <span class="hint-chip" id="mode2Chip"><b>2:</b>Speech</span> |
       <span class="hint-chip"><b>C:</b>Snap</span> |
       <span class="hint-chip"><b>S:</b>Solve</span> |
       <span class="hint-chip"><b>V:</b>Mic</span> |
@@ -202,87 +300,371 @@
       <span class="hint-chip"><b>X:</b>Clr</span>
     </div>
 
-    <!-- Actions Toolbar -->
+    <!-- TOOLBAR -->
     <div id="toolbar">
       <button class="action-btn" id="attachResumeBtn">📎 Attach Resume</button>
-      <button class="action-btn" id="toggleDirectVoiceBtn">⚡ Direct Voice: OFF</button>
+      <button class="action-btn" id="toggleDirectVoiceBtn">🎙️ Direct Voice: OFF</button>
+      <button class="action-btn" id="toggleGeminiBtn">✨ Gemini: ON</button>
     </div>
 
-    <!-- AI Output Box -->
+    <!-- OUTPUT -->
     <div id="content-box">
-      <div id="answer">Ready. Press 1 (Code), 2 (Speech), Q (Copy), or Hotkeys...</div>
+      <div id="answer" class="answer-block">
+        <span style="color: #94a3b8; font-size: 12px;">
+          Ready. Press 1 (Code), 2 (Speech), Q (Copy), or Hotkeys...
+        </span>
+      </div>
     </div>
+
   </div>
 
   <script>
     const { ipcRenderer } = require('electron');
 
+    /* =====================================================
+       DOM REFERENCES
+    ===================================================== */
     const statusDiv = document.getElementById('status');
     const answerDiv = document.getElementById('answer');
+    const contentBox = document.getElementById('content-box');
     const modeBadge = document.getElementById('modeBadge');
     const attachResumeBtn = document.getElementById('attachResumeBtn');
     const toggleDirectVoiceBtn = document.getElementById('toggleDirectVoiceBtn');
+    const toggleGeminiBtn = document.getElementById('toggleGeminiBtn');
+    const titlebar = document.getElementById('titlebar');
 
+    /* =====================================================
+       FIXED-SIZE JS DRAGGING
+    ===================================================== */
+    let isDragging = false;
+    let initialMouseX = 0;
+    let initialMouseY = 0;
+
+    titlebar.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.controls') || e.target.closest('.badge')) return;
+      isDragging = true;
+      initialMouseX = e.clientX;
+      initialMouseY = e.clientY;
+      document.body.style.userSelect = 'none';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      ipcRenderer.send('window-drag-move', {
+        mouseX: initialMouseX,
+        mouseY: initialMouseY
+      });
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.userSelect = 'text';
+      }
+    });
+
+    /* =====================================================
+       WINDOW BUTTONS
+    ===================================================== */
     document.getElementById('minBtn').onclick = () => ipcRenderer.send('window-minimize');
     document.getElementById('maxBtn').onclick = () => ipcRenderer.send('window-toggle-maximize');
     document.getElementById('hideBtn').onclick = () => ipcRenderer.send('window-hide');
 
+    /* =====================================================
+       MODE BUTTONS
+    ===================================================== */
+    document.getElementById('mode1Chip').onclick = () => ipcRenderer.send('switch-mode', 'code');
+    document.getElementById('mode2Chip').onclick = () => ipcRenderer.send('switch-mode', 'speech');
+
+    /* =====================================================
+       RESUME
+    ===================================================== */
     attachResumeBtn.onclick = async () => {
-      const res = await ipcRenderer.invoke('select-resume-file');
-      if (res && res.success) {
-        attachResumeBtn.innerText = `✅ Attached: ${res.name}`;
-        attachResumeBtn.style.borderColor = '#00ff88';
-        statusDiv.innerText = 'Resume Synced';
+      try {
+        const res = await ipcRenderer.invoke('select-resume-file');
+        if (res && res.success) {
+          attachResumeBtn.innerText = `✅ Attached: ${res.name}`;
+          attachResumeBtn.style.borderColor = '#00ff88';
+          statusDiv.innerText = 'Resume Synced';
+        }
+      } catch (err) {
+        console.error('Resume error:', err);
+        statusDiv.innerText = 'Resume Error';
       }
     };
 
+    /* =====================================================
+       GEMINI / GROQ TOGGLE UI
+    ===================================================== */
+    let isGeminiEnabled = true;
+
+    function updateGeminiUI(enabled) {
+      isGeminiEnabled = Boolean(enabled);
+      if (isGeminiEnabled) {
+        toggleGeminiBtn.innerText = '✨ Gemini: ON';
+        toggleGeminiBtn.style.borderColor = '#00ff88';
+        toggleGeminiBtn.style.background = 'rgba(0, 255, 136, 0.2)';
+        toggleGeminiBtn.style.color = '#ffffff';
+      } else {
+        toggleGeminiBtn.innerText = '✨ Gemini: OFF (Groq is ON)';
+        toggleGeminiBtn.style.borderColor = '#f59e0b';
+        toggleGeminiBtn.style.background = 'rgba(245, 158, 11, 0.15)';
+        toggleGeminiBtn.style.color = '#fbbf24';
+      }
+    }
+
+    toggleGeminiBtn.onclick = () => {
+      isGeminiEnabled = !isGeminiEnabled;
+      updateGeminiUI(isGeminiEnabled);
+      ipcRenderer.send('toggle-gemini', isGeminiEnabled);
+    };
+
+    ipcRenderer.on('gemini-state', (event, enabled) => {
+      updateGeminiUI(enabled);
+    });
+
+    // Default Initialization
+    updateGeminiUI(true);
+
+    /* =====================================================
+       BLOB -> BASE64
+    ===================================================== */
     function blobToBase64(blob) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onloadend = () => {
+          try {
+            const result = reader.result;
+            const base64 = result.split(',')[1];
+            resolve(base64);
+          } catch (err) {
+            reject(err);
+          }
+        };
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
     }
 
+    /* =====================================================
+       HTML ESCAPE
+    ===================================================== */
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    /* =====================================================
+       FORMAT AI RESPONSE
+    ===================================================== */
+    function formatTextToHtml(rawText) {
+      if (!rawText) return '';
+      const text = String(rawText).trim();
+
+      if (text.includes('```')) {
+        const match = text.match(/```(?:[a-zA-Z0-9_+#.-]+)?\s*([\s\S]*?)```/);
+        if (match) {
+          const cleanCode = match[1].trim();
+          return `<pre><code>${escapeHtml(cleanCode)}</code></pre>`;
+        }
+        const cleanCode = text
+          .replace(/```[a-zA-Z0-9_+#.-]*/gi, '')
+          .replace(/```/g, '')
+          .trim();
+        return `<pre><code>${escapeHtml(cleanCode)}</code></pre>`;
+      }
+
+      const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+      let html = '';
+
+      lines.forEach(line => {
+        if (line.startsWith('-') || line.startsWith('*') || line.startsWith('•')) {
+          const cleanLine = line.replace(/^[-*•]\s*/, '');
+          html += `
+            <div class="bullet-row">
+              <span class="bullet-icon">▸</span>
+              <span>${escapeHtml(cleanLine)}</span>
+            </div>
+          `;
+        } else {
+          html += `<div>${escapeHtml(line)}</div>`;
+        }
+      });
+
+      return html || escapeHtml(text);
+    }
+
+    /* =====================================================
+       STATE
+    ===================================================== */
+    let isDirectMode = false;
+    let voiceHistory = [];
+
+    /* =====================================================
+       AI UPDATE LISTENER
+    ===================================================== */
     ipcRenderer.on('ai-update', (event, data) => {
+      if (!data) return;
+
       if (data.type === 'status') {
-        statusDiv.innerText = data.msg;
-      } else if (data.type === 'answer') {
+        statusDiv.innerText = data.msg || 'Standby';
+        return;
+      }
+
+      if (data.type === 'answer') {
         statusDiv.innerText = 'Solved';
-        answerDiv.innerText = data.text;
-      } else if (data.type === 'clear') {
+
+        const latencyBadge = data.duration
+          ? `<span class="latency-badge">⏱️ ${escapeHtml(data.duration)}</span>`
+          : '';
+
+        if (isDirectMode) {
+          voiceHistory.unshift({
+            text: data.text || '',
+            duration: data.duration || ''
+          });
+
+          if (voiceHistory.length > 4) {
+            voiceHistory.pop();
+          }
+
+          answerDiv.innerHTML = '';
+
+          voiceHistory.forEach((item, index) => {
+            const block = document.createElement('div');
+            block.className = 'answer-block';
+
+            let text = item.text || '';
+            let questionTag = '';
+
+            const itemLatency = item.duration
+              ? `<span class="latency-badge">⏱️ ${escapeHtml(item.duration)}</span>`
+              : '';
+
+            if (text.includes('🎙️') && text.includes('💡')) {
+              const parts = text.split('💡');
+              const question = parts[0]
+                .replace('🎙️', '')
+                .replace(/"/g, '')
+                .trim();
+              text = parts.slice(1).join('💡').trim();
+
+              questionTag = `
+                <div class="question-tag">
+                  <span>Q: ${escapeHtml(question)}</span>
+                  ${itemLatency}
+                </div>
+              `;
+            } else {
+              questionTag = `
+                <div class="question-tag">
+                  <span>Result</span>
+                  ${itemLatency}
+                </div>
+              `;
+            }
+
+            block.innerHTML = questionTag + formatTextToHtml(text);
+            answerDiv.appendChild(block);
+
+            if (index < voiceHistory.length - 1) {
+              const divider = document.createElement('div');
+              divider.style.margin = '10px 0';
+              divider.style.borderTop = '1px dashed rgba(0, 255, 136, 0.35)';
+              answerDiv.appendChild(divider);
+            }
+          });
+
+          if (contentBox) contentBox.scrollTop = 0;
+          return;
+        }
+
+        let text = data.text || '';
+        let questionTag = '';
+
+        if (text.includes('🎙️') && text.includes('💡')) {
+          const parts = text.split('💡');
+          const question = parts[0]
+            .replace('🎙️', '')
+            .replace(/"/g, '')
+            .trim();
+          text = parts.slice(1).join('💡').trim();
+
+          questionTag = `
+            <div class="question-tag">
+              <span>Q: ${escapeHtml(question)}</span>
+              ${latencyBadge}
+            </div>
+          `;
+        } else {
+          questionTag = `
+            <div class="question-tag">
+              <span>Result</span>
+              ${latencyBadge}
+            </div>
+          `;
+        }
+
+        answerDiv.innerHTML = questionTag + formatTextToHtml(text);
+        if (contentBox) contentBox.scrollTop = 0;
+        return;
+      }
+
+      if (data.type === 'clear') {
+        voiceHistory = [];
         statusDiv.innerText = 'Standby';
-        answerDiv.innerText = 'Buffer cleared. Ready.';
+        answerDiv.innerHTML = `
+          <span style="color: #94a3b8; font-size: 12px;">
+            Buffer cleared. Ready.
+          </span>
+        `;
       }
     });
 
-    let isDirectMode = false;
+    /* =====================================================
+       AUDIO CAPTURE & VAD
+    ===================================================== */
     let isCapturingManual = false;
+    let manualRecorder = null;
+    let manualChunks = [];
+    let manualStream = null;
+
     let directStream = null;
     let audioContext = null;
     let analyser = null;
+    let analyserSource = null;
     let directRecorder = null;
     let directChunks = [];
     let silenceTimer = null;
+    let voiceDetectionFrame = null;
     let isSpeaking = false;
+    let directSegmentStart = 0;
+    let directProcessing = false;
+
+    const SILENCE_MS = 900;
+    const MIN_SEGMENT_MS = 450;
+    const VOICE_THRESHOLD = 14;
 
     function setDirectMode(enabled) {
-      isDirectMode = enabled;
+      isDirectMode = Boolean(enabled);
+
       if (isDirectMode) {
-        modeBadge.innerText = 'Direct VAD';
+        modeBadge.innerText = '🎙️ Direct VAD';
         modeBadge.classList.add('active');
-        toggleDirectVoiceBtn.innerText = '⚡ Direct Voice: ON';
+        toggleDirectVoiceBtn.innerText = '🎙️ Direct Voice: ON';
         toggleDirectVoiceBtn.style.borderColor = '#00ff88';
         toggleDirectVoiceBtn.style.background = 'rgba(0, 255, 136, 0.25)';
         startContinuousAudioMonitoring();
       } else {
-        modeBadge.innerText = 'Manual Mic';
+        modeBadge.innerText = '🎙️ Manual Mic';
         modeBadge.classList.remove('active');
-        toggleDirectVoiceBtn.innerText = '⚡ Direct Voice: OFF';
+        toggleDirectVoiceBtn.innerText = '🎙️ Direct Voice: OFF';
         toggleDirectVoiceBtn.style.borderColor = 'rgba(240, 246, 252, 0.15)';
-        toggleDirectVoiceBtn.style.background = 'rgba(48, 54, 61, 0.8)';
+        toggleDirectVoiceBtn.style.background = 'rgba(30, 35, 45, 0.6)';
         stopContinuousAudioMonitoring();
+        statusDiv.innerText = 'Standby';
       }
     }
 
@@ -290,10 +672,18 @@
     ipcRenderer.on('toggle-direct-mode', () => setDirectMode(!isDirectMode));
 
     async function startContinuousAudioMonitoring() {
+      if (directStream) return;
+
       try {
+        statusDiv.innerText = 'Starting Direct Voice...';
         const sourceId = await ipcRenderer.invoke('get-desktop-source-id');
+
         directStream = await navigator.mediaDevices.getUserMedia({
-          audio: { mandatory: { chromeMediaSource: 'desktop' } },
+          audio: {
+            mandatory: {
+              chromeMediaSource: 'desktop'
+            }
+          },
           video: {
             mandatory: {
               chromeMediaSource: 'desktop',
@@ -304,84 +694,197 @@
         });
 
         const audioTrack = directStream.getAudioTracks()[0];
+        if (!audioTrack) throw new Error('Desktop audio track not available.');
+
         const audioStream = new MediaStream([audioTrack]);
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaStreamSource(audioStream);
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
+        }
+
+        analyserSource = audioContext.createMediaStreamSource(audioStream);
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 512;
-        source.connect(analyser);
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.15;
+        analyserSource.connect(analyser);
 
         const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        function detectVoice() {
-          if (!isDirectMode) return;
+        const detectVoice = () => {
+          if (!isDirectMode || !analyser) return;
+
+          if (statusDiv.innerText.includes('ANALYZING') || statusDiv.innerText.includes('VISION')) {
+            voiceDetectionFrame = requestAnimationFrame(detectVoice);
+            return;
+          }
+
           analyser.getByteFrequencyData(dataArray);
 
           let sum = 0;
-          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-          let average = sum / dataArray.length;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+          }
+          const average = sum / dataArray.length;
 
-          if (average > 12) { 
+          if (average > VOICE_THRESHOLD) {
             if (!isSpeaking) {
               isSpeaking = true;
+              directSegmentStart = Date.now();
               startDirectSegmentRecorder(audioStream);
             }
+
             clearTimeout(silenceTimer);
             silenceTimer = setTimeout(() => {
-              isSpeaking = false;
-              if (directRecorder && directRecorder.state === 'recording') {
-                directRecorder.stop();
-              }
-            }, 1400);
+              finishDirectSegment();
+            }, SILENCE_MS);
           }
 
-          requestAnimationFrame(detectVoice);
-        }
+          voiceDetectionFrame = requestAnimationFrame(detectVoice);
+        };
 
         detectVoice();
         statusDiv.innerText = 'Listening Calls (Auto)...';
+
       } catch (err) {
-        console.error(err);
+        console.error('Direct audio error:', err);
         statusDiv.innerText = 'Direct Mic Error';
+        stopContinuousAudioMonitoring();
+      }
+    }
+
+    function finishDirectSegment() {
+      if (!isSpeaking) return;
+
+      isSpeaking = false;
+      clearTimeout(silenceTimer);
+      silenceTimer = null;
+
+      const duration = Date.now() - directSegmentStart;
+
+      if (duration < MIN_SEGMENT_MS) {
+        if (directRecorder && directRecorder.state === 'recording') {
+          directRecorder.stop();
+        }
+        return;
+      }
+
+      if (directRecorder && directRecorder.state === 'recording') {
+        directRecorder.stop();
       }
     }
 
     function startDirectSegmentRecorder(stream) {
+      if (directRecorder && directRecorder.state === 'recording') return;
+
       directChunks = [];
-      directRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      directRecorder.ondataavailable = (e) => { if (e.data.size > 0) directChunks.push(e.data); };
-      directRecorder.onstop = async () => {
-        if (directChunks.length === 0) return;
-        const audioBlob = new Blob(directChunks, { type: 'audio/webm' });
-        const base64 = await blobToBase64(audioBlob);
-        statusDiv.innerText = 'Auto-Answering Voice...';
-        ipcRenderer.send('process-internal-audio', base64);
+      let recorderOptions = { mimeType: 'audio/webm' };
+      if (!MediaRecorder.isTypeSupported('audio/webm')) recorderOptions = {};
+
+      try {
+        directRecorder = new MediaRecorder(stream, recorderOptions);
+      } catch (err) {
+        console.error('MediaRecorder error:', err);
+        return;
+      }
+
+      directRecorder.ondataavailable = event => {
+        if (event.data && event.data.size > 0) {
+          directChunks.push(event.data);
+        }
       };
+
+      directRecorder.onerror = event => {
+        console.error('Direct recorder error:', event.error);
+      };
+
+      directRecorder.onstop = async () => {
+        const chunks = [...directChunks];
+        directChunks = [];
+
+        if (chunks.length === 0) return;
+
+        try {
+          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          if (audioBlob.size < 1000) return;
+
+          if (directProcessing) return;
+
+          directProcessing = true;
+          statusDiv.innerText = '⚡ Processing Voice...';
+
+          const base64 = await blobToBase64(audioBlob);
+          ipcRenderer.send('process-internal-audio', base64);
+
+        } catch (err) {
+          console.error('Direct audio conversion error:', err);
+        }
+      };
+
       directRecorder.start();
     }
 
+    ipcRenderer.on('ai-update', (event, data) => {
+      if (!data) return;
+      if (data.type === 'answer') directProcessing = false;
+      if (data.type === 'status' && typeof data.msg === 'string' && data.msg.includes('Error')) {
+        directProcessing = false;
+      }
+    });
+
     function stopContinuousAudioMonitoring() {
+      isDirectMode = false;
+      isSpeaking = false;
+      directProcessing = false;
+
+      if (voiceDetectionFrame) {
+        cancelAnimationFrame(voiceDetectionFrame);
+        voiceDetectionFrame = null;
+      }
+
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
+      }
+
+      if (directRecorder && directRecorder.state !== 'inactive') {
+        try { directRecorder.stop(); } catch {}
+      }
+      directRecorder = null;
+      directChunks = [];
+
+      if (analyserSource) {
+        try { analyserSource.disconnect(); } catch {}
+      }
+      analyserSource = null;
+      analyser = null;
+
+      if (audioContext) {
+        try { audioContext.close(); } catch {}
+      }
+      audioContext = null;
+
       if (directStream) {
-        directStream.getTracks().forEach(t => t.stop());
+        directStream.getTracks().forEach(track => {
+          try { track.stop(); } catch {}
+        });
         directStream = null;
       }
-      if (audioContext) {
-        audioContext.close();
-        audioContext = null;
-      }
-    }
 
-    let manualRecorder = null;
-    let manualChunks = [];
-    let manualStream = null;
+      statusDiv.innerText = 'Standby';
+    }
 
     async function toggleManualAudio() {
       if (!isCapturingManual) {
         try {
           const sourceId = await ipcRenderer.invoke('get-desktop-source-id');
+
           manualStream = await navigator.mediaDevices.getUserMedia({
-            audio: { mandatory: { chromeMediaSource: 'desktop' } },
+            audio: {
+              mandatory: {
+                chromeMediaSource: 'desktop'
+              }
+            },
             video: {
               mandatory: {
                 chromeMediaSource: 'desktop',
@@ -392,31 +895,65 @@
           });
 
           const audioTrack = manualStream.getAudioTracks()[0];
-          manualRecorder = new MediaRecorder(new MediaStream([audioTrack]), { mimeType: 'audio/webm' });
+          const audioStream = new MediaStream([audioTrack]);
+
+          let recorderOptions = { mimeType: 'audio/webm' };
+          if (!MediaRecorder.isTypeSupported('audio/webm')) recorderOptions = {};
+
+          manualRecorder = new MediaRecorder(audioStream, recorderOptions);
           manualChunks = [];
 
-          manualRecorder.ondataavailable = (e) => { if (e.data.size > 0) manualChunks.push(e.data); };
+          manualRecorder.ondataavailable = event => {
+            if (event.data && event.data.size > 0) {
+              manualChunks.push(event.data);
+            }
+          };
+
           manualRecorder.onstop = async () => {
-            const audioBlob = new Blob(manualChunks, { type: 'audio/webm' });
-            const base64 = await blobToBase64(audioBlob);
-            statusDiv.innerText = 'Processing Speech...';
-            ipcRenderer.send('process-internal-audio', base64);
-            if (manualStream) { manualStream.getTracks().forEach(t => t.stop()); manualStream = null; }
+            try {
+              const audioBlob = new Blob(manualChunks, { type: 'audio/webm' });
+              if (audioBlob.size < 1000) return;
+
+              const base64 = await blobToBase64(audioBlob);
+              statusDiv.innerText = 'Processing Speech...';
+              ipcRenderer.send('process-internal-audio', base64);
+
+            } catch (err) {
+              console.error('Manual audio error:', err);
+            } finally {
+              if (manualStream) {
+                manualStream.getTracks().forEach(track => track.stop());
+                manualStream = null;
+              }
+              manualRecorder = null;
+              manualChunks = [];
+            }
           };
 
           manualRecorder.start();
           isCapturingManual = true;
           statusDiv.innerText = '🔴 Recording Voice...';
+
         } catch (err) {
+          console.error('Manual audio error:', err);
           statusDiv.innerText = 'Manual Mic Error';
         }
       } else {
         isCapturingManual = false;
-        if (manualRecorder && manualRecorder.state !== 'inactive') manualRecorder.stop();
+        if (manualRecorder && manualRecorder.state !== 'inactive') {
+          manualRecorder.stop();
+        }
       }
     }
 
     ipcRenderer.on('toggle-voice', () => toggleManualAudio());
+
+    window.addEventListener('beforeunload', () => {
+      try { stopContinuousAudioMonitoring(); } catch {}
+      try {
+        if (manualStream) manualStream.getTracks().forEach(track => track.stop());
+      } catch {}
+    });
   </script>
 </body>
 </html>

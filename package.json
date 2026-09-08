@@ -2,11 +2,11 @@
   "name": "stealth-assistant",
   "version": "1.0.0",
   "description": "Stealth Interview Assistant",
-  "main": "server.js",
+  "main": "main.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "electron": "electron ."
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64"
   },
   "keywords": [],
   "author": "",
@@ -20,10 +20,25 @@
     "node-record-lpcm16": "^1.0.1",
     "pdf-parse": "^2.4.5",
     "screenshot-desktop": "^1.15.6",
+    "sharp": "^0.35.4",
     "uiohook-napi": "^1.5.5",
     "ws": "^8.21.3"
   },
   "devDependencies": {
-    "electron": "^44.0.0"
+    "electron": "^44.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.stealth.assistant",
+    "productName": "StealthAssistant",
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+    ],
+    "asar": true
   }
 }
